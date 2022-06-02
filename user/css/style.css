@@ -1,0 +1,45 @@
+.popup-merchant-rating #stars .glyphicon {
+	font-size: 20px;
+	padding: 0px 3px;
+}
+
+.popup-merchant-rating #stars .glyphicon.glyphicon-star-empty {
+	color: #C8C8C8;
+}
+
+.popup-merchant-rating textarea {
+	height: 60px;
+	padding: 5px 10px;
+	width: 100%;
+}
+
+.popup-merchant-rating #stars .glyphicon.glyphicon-star {
+	color: var(--user-color);
+}
+
+.popup-merchant-rating .starrr {
+	display: inline-block;
+	margin-bottom: 15px;
+	margin-top: 5px;
+}
+
+.popup-merchant-rating .starrr+span {
+	padding-left: 10px;
+	vertical-align: 4px;
+}
+.popup-merchant-rating label {
+    display: block;
+    line-height: 14px;
+    color: #999999;
+    font-weight: 400;
+}
+.popup-merchant-rating textarea,
+.popup-merchant-rating input
+{
+    border: 1px solid #767676;
+    border-radius: 2px;
+}
+.popup-merchant-rating .feedback-popup-submitbtn, .popup-merchant-rating .feedback-popup-submitbtn:hover,
+.popup-merchant-rating.feedback-popup-submitbtn:focus{
+    border-radius: 2px;
+}
