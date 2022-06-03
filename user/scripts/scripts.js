@@ -37,9 +37,6 @@
     return decodeURIComponent(results[2].replace(/\+/g, ' '));
   }
 
-
-
-  
   //get mp, user custom fields
 
  var getCustomFields  = (function (){
@@ -99,11 +96,33 @@
             }
           },
         });
-    }
+      }
+      
+      function getConsumerDetails(consumerId, callback)
+      {
+        var apiUrl = `/api/v2/users/${consumerId}`;
+        $.ajax({
+          url: apiUrl,
+          method: "GET",
+          contentType: "application/json",
+          success: function (result) {
+            if (result) {
+              callback(result);
+            // console.log(`custom  ${result.CustomFields}`);
+            } else {
+              callback();
+            // console.log(`custom  ${result.CustomFields}`);
+            }
+          },
+        });
+      }
+
+
       return {
         getMarketplaceCustomFields: getMarketplaceCustomFields,
         getUserCustomFields: getUserCustomFields,
-        getMerchantDetails : getMerchantDetails
+        getMerchantDetails: getMerchantDetails,
+        getConsumerDetails : getConsumerDetails
         
       }
   }
@@ -235,49 +254,49 @@ var merchantReview = (function (){
     function init()
     {
      
-      function appendReviewModal(name)
-      {
-        //append the modal to the body of home page
-        $('head').append(`<script type="text/javascript" src="https://bootstrap.arcadier.com/spacetime/js/rating.js"></script>`);
-        let reviewModal = `<div class="popup-area popup-merchant-rating">
-                          <div class="wrapper">
-                            <div class="title-area">
-                                <div class="pull-left"><strong>Please rate ${name} and write a review</strong></div>
-                              <div class="pull-right"> <a href="javascript:void(0);" onclick="closePopup('popup-merchant-rating')"><img src="https://bootstrap.arcadier.com/package/images/icon-cross-black.png" /></a> </div>
-                              <div class="clearfix"></div>
-                            </div>
-                            <div class="content-area">
-                                <div class="form-group">
-                                    <label for="your-name">Your Name</label>
-                                    <input type="text" name="headline" id="your-name" class="form-control">
-                                </div>
-                                <div class="form-group">
-                                    <label for="headline">Overall Ratings</label>
-                                    <input type="hidden" value="" name="rating_val" id="rating">
-                                    <div id="stars" class="starrr"></div>
-                                    <div class='starrrs' id="star2"></div>
-                                </div>
-                                  <div class="form-group">
-                                    <label for="headline">Headline</label>
-                                    <input type="text" name="headline" id="headline" class="form-control">
-                                  </div>
-                                  <div class="form-group">
-                                    <label for="review">Review</label>
-                                    <textarea name="review" id="review" class="form-control" ></textarea>
-                                  </div>
-                            </div>
-                            <div class="btn-area text-center"> <a href="javascript:void(0);" class="feedback-popup-submitbtn" onclick="">SUBMIT</a>
-                              <div class="clearfix"></div>
-                            </div>
-                            </div>
+    function appendReviewModal(name)
+    {
+      //append the modal to the body of home page
+      $('head').append(`<script type="text/javascript" src="https://bootstrap.arcadier.com/spacetime/js/rating.js"></script>`);
+      let reviewModal = `<div class="popup-area popup-merchant-rating">
+                        <div class="wrapper">
+                          <div class="title-area">
+                              <div class="pull-left"><strong>Please rate ${name} and write a review</strong></div>
+                            <div class="pull-right"> <a href="javascript:void(0);" onclick="closePopup('popup-merchant-rating')"><img src="https://bootstrap.arcadier.com/package/images/icon-cross-black.png" /></a> </div>
+                            <div class="clearfix"></div>
                           </div>
-                          <!--modal register-->
-                          <div id="cover"></div>
-                          <div class="modal-overlay"></div>`;
-        $('body').append(reviewModal);
-       
+                          <div class="content-area">
+                              <div class="form-group">
+                                  <label for="your-name">Your Name</label>
+                                  <input type="text" name="headline" id="your-name" class="form-control">
+                              </div>
+                              <div class="form-group">
+                                  <label for="headline">Overall Ratings</label>
+                                  <input type="hidden" value="" name="rating_val" id="rating">
+                                  <div id="stars" class="starrr"></div>
+                                  <div class='starrrs' id="star2"></div>
+                              </div>
+                                <div class="form-group">
+                                  <label for="headline">Headline</label>
+                                  <input type="text" name="headline" id="headline" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                  <label for="review">Review</label>
+                                  <textarea name="review" id="review" class="form-control" ></textarea>
+                                </div>
+                          </div>
+                          <div class="btn-area text-center"> <a href="javascript:void(0);" class="feedback-popup-submitbtn" onclick="">SUBMIT</a>
+                            <div class="clearfix"></div>
+                          </div>
+                          </div>
+                        </div>
+                        <!--modal register-->
+                        <div id="cover"></div>
+                        <div class="modal-overlay"></div>`;
+      $('body').append(reviewModal);
+      
 
-      }
+    }
       
     function giveItemFeedback(){
       var target =  jQuery(".popup-area.popup-merchant-rating");
@@ -356,8 +375,7 @@ var merchantReview = (function (){
         })
     }
       
-    function sendEmailToMerchant(merchant_guid)
-    {
+    function sendEmailToMerchant(merchant_guid) {
         var data = { merchant_guid };
           console.log(data);
           var apiUrl = packagePath + '/send_review.php';
@@ -384,6 +402,142 @@ var merchantReview = (function (){
             }
         });
     }
+    
+      function getMerchantReviews(merchant_guid)
+      {
+    
+      var data = [{ 'Name': 'merchant_id', 'Operator': "equal", "Value": merchant_guid }]
+            
+            $.ajax({
+              method: "POST",
+              url: `${protocol}//${baseURL}/api/v2/plugins/${packageId}/custom-tables/merchant_reviews/`,
+              headers: {
+                "Content-Type": "application/json"
+              },
+            
+              data: JSON.stringify(data),
+         
+              success: function (response)
+              {
+                console.table({ response })
+                const reviews = response.Records;
+                const totalReviews = response.TotalRecords;
+                // add the existing review from the item reviews
+
+
+                 reviews.forEach(function (review, i){
+
+                   let consumerId = review.consumer_id;
+                   let rating = review.rating;
+                   let headline = review.headline;
+                   let reviewText = review.review;
+
+                   var userData = getCustomFields.getInstance();
+                    userData.getConsumerDetails(consumerId,function (result){
+                      let consumerName = result.DisplayName;
+                      let consumerImage = result['Media'].length ? result['Media'][0]['MediaUrl']: '';
+                     
+
+                      appendReviews(consumerName, consumerImage, headline, reviewText, rating, review.Id);
+
+                    })
+
+
+                    
+                    
+                })
+                
+
+            
+              }
+            })
+      
+      }
+      
+    function appendReviews(consumer_name, image, headline, review, rating, id)
+    {
+      // const reviewDiv = `<div class="cart-item-row" data-key="item" data-id="147989" id=${id}>   
+      // <div class="cart-item-box-left">      
+      // <div class="cart-item-img"> 
+      // <img src="https://26thofmay.test.arcadier.io/images/items/item-170586-637892220599169685-j5kcam.jpg"> 
+      // </div>   </div>   <div class="cart-item-box-desc">     
+      //  <div>         
+      //  <div class="col-md-7" data-item-guid="e49f534a-e739-43eb-b584-b5d8cd8b9480" data-item-id="959064">            
+      //  <h3><a href="/User/Item/Detail/Full-house-electrical-setup/959064">${headline}</a></h3>         
+      //  </div>         <div class="col-md-5">            <div class="storefront-date">27/05/22, 12:30</div>         
+      //  </div>         <div class="clearfix"></div>      </div>      <div class="storefront-desc">        
+      //   <div class="cart-top-sec-left">
+      //   <img src="${image}" align="absmiddle" width="40">
+      //   <span class="cart-publish-merchant">${consumer_name}</span></div>
+      //      <div class="cart-top-sec-left">
+      //     <div class="store-rating"></div>         
+      //     </div>
+      // <div class="clearfix"></div>      </div><!-- End of <div class="storefront-desc"> -->
+      //   <div class="cart-item-desc">${review}</div></div></div>`
+      
+
+
+
+      const reviewDiv = `<div class="cart-item-row" data-key="item" data-id="1" id=${id}>
+
+                    <div class="cart-item-box-desc cart-item-box-left-remove">
+
+                        <div class="row">
+
+                        <div class="col-md-7">
+
+                          <h3><a href="">${headline}</a></h3>
+
+                        </div>
+
+                        <div class="col-md-5">
+
+                          <div class="storefront-date"><span class="date-format">DD/MM/YY</span>, <span class="time-format">00:00</span></div>
+
+                        </div>
+
+                        <div class="clearfix"></div>
+
+                      </div>
+
+                      <div class="storefront-desc">
+
+                        <div class="cart-top-sec-left"><img src="${image}" align="absmiddle" width="40"><span class="cart-publish-merchant">${consumer_name}</span></div>
+
+                        <div class="cart-top-sec-right">
+
+                          <div class="store-rating">  </div>
+
+                        </div>
+
+                        <div class="clearfix"></div>
+
+                      </div>
+
+                      <div class="cart-item-desc"> ${review}
+
+
+                      </div>
+
+                    </div>
+
+                  </div>`
+      
+      $('#item-reviewed').append(reviewDiv);
+
+      $(`#${id} .store-rating`).starrr({
+        rating: rating,
+        readOnly: true
+      })
+
+      $(`#${id} .store-rating`).css({pointerEvents: "none"});
+
+
+
+    }
+      
+
+
  
   return {
     appendReviewModal: appendReviewModal,
@@ -391,7 +545,8 @@ var merchantReview = (function (){
     getRating: getRating,
     submitFeedback: submitFeedback,
     closePopup: closePopup,
-    saveFeedback: saveFeedback
+    saveFeedback: saveFeedback,
+    getMerchantReviews : getMerchantReviews
     
   }
   }
@@ -411,7 +566,6 @@ var merchantReview = (function (){
 })()
 
   
-
   $(document).ready(function () {
   
     
@@ -513,7 +667,32 @@ var merchantReview = (function (){
 
     }
 
-  
+    //store front
+    if (urls.indexOf('/user/merchantaccount')) {
+    
+       $('head').append(`<script type="text/javascript" src="https://bootstrap.arcadier.com/spacetime/js/rating.js"></script>`);
+      var reviewAction = merchantReview.getInstance(); 
+      
+      reviewAction.getMerchantReviews($('#storefrontMerchantGuid').val());
+
+    //on scroll, since reviews are not paginated
+      //    window.onscroll = function (ev)
+      // {
+      //    //appending the status in select element
+      // waitForElement(".cart-item-row", function ()
+      // {
+      //   console.log('in onscroll');
+      //   reviewAction.getMerchantReviews($('#storefrontMerchantGuid').val());
+
+      
+      // });
+        
+      // };
+
+
+    }
+
+
 
   
   });
