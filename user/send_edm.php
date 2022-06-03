@@ -32,59 +32,70 @@ $item_sku = $item_details['SKU'];
 $item_seller_displayname = $item_details['MerchantDetail']['DisplayName'];
 $item_image = $item_details['Media'][0]['MediaUrl'];
 
-$url = $baseUrl . '/api/v2/users/' . $merchantId;
+$url = $baseUrl . '/api/v2/users/' . $userId;
 $merchant_details = callAPI("GET", null, $url, false);
 $mechant_name = $merchant_details['DisplayName'];
 
+//update the buyer's review status, 
+$url = $baseUrl . '/api/v2/admins/'. $admin_id . '/custom-field-definitions';
+$packageCustomFields = callAPI("GET", $admin_token['access_token'], $url, false);
+$review_code;
+
+    foreach ($packageCustomFields as $cf) {
+        if ($cf['Name'] == 'reviewed') {
+               $review_code = $cf['Code'];
+        }  
+    }
+  $data = [
+        'CustomFields' => [
+            [
+                'Code' => $review_code,
+                'Values' => [ 'true' ],
+            ],
+
+           
+
+        ],
+    ];
+    echo json_encode(['date' => $data]);    
+    $url = $baseUrl . '/api/v2/users/' . $userId;
+    echo json_encode(['url' => $url]);
+    $result = callAPI("PUT", $admin_token['access_token'], $url, $data);
+    echo json_encode(['result' => $result]);
+
+
+
 $emails =  $content['emails'];
-$mp_url = $baseUrl .'/user/marketplace/customlogin?isSeller=false&isInvited=true';
+$mp_url = $baseUrl .'/user/marketplace/customlogin?isSeller=false&isInvited=true&merchant_guid='. $userId;
        foreach($emails as $email) {
             //send the EDM
             
-                $subject = 'New order interest';
+                $subject = 'Merchant Invite';
                 $data = [
                     'From' => $merchant_details['Email'],
                     'To' => $email,
                     'Cc' => $admin_email,
                     'Subject' => $subject,
-                    'Body' =>  "<html> <body><div style=\"max-width:700px; width:100%; margin:0 auto; border:1px solid #ddd; color:#999; font-size:16px; font-family:sans-serif;  line-height:25px;\">
-
+                    'Body' =>  "<html>
+                    <body>
+                    <div style=\"max-width:700px; width:100%; margin:0 auto; border:1px solid #ddd; color:#999; font-size:16px; font-family:sans-serif; line-height:25px;\">
                     <div style=\"padding:15px;\">
-                
                     <div style=\"text-align:center; margin-bottom:50px;\"> <img src=\"http://bootstrap.arcadier.com/marketplace/images/logo.png\" style=\"max-width:200px;\" /> </div>
-                
-                    <div>
-                
-                        <p style=\"color:#000; font-weight:bold; margin-bottom:50px;\">Hello Buyer name,</p>
-                
-                        <p>Thank you for providing an opportunity to serve your needs. We really enjoyed working with you on landscaping project. We request you to provide a rating about the services you have received from us.
-                        You will be entered in a weekly sweepstakes to win a XXX upon writing the review and creating a free account. You can also search service providers like us on this free website for your future needs.
-            
-                      
+                    <div style=\"margin-bottom:35px;\">
+                        <p style=\"color:#000; font-weight:bold; margin-bottom:40px;\">Hi,</p>
+                        <p style=\"margin-bottom:20px;\">Thank you for providing an opportunity to serve your needs. We really enjoyed working with you. We request you to provide a rating and a review about the services you have received from us. You will be entered in a weekly sweepstakes to win a prize upon creating a free account and writing the review. You can also search service providers like us on this free website for your future needs.</p>
+                        <p style=\"margin-bottom:20px;\">Here is the link to the customer portal to create a free account and write a review.</p>
                         
+                        <p style=\"margin-top:10px;\"><a href=$mp_url style=\"color:#FF5A60; text-decoration: none; outline: none; font-weight: 600;\" target=\"_blank\">https://BNImarketplace.io</a></p>
+                        </div>
+
+                        <div style=\"margin-bottom:50px;\">
+                        <p style=\"margin-top:0px;\">Thank You,<br>$merchant_name <br></p>
+                        </div>
                     </div>
-                
-                    <div style=\"border-bottom:1px solid #000; border-top:1px solid #000; padding-top: 10px; padding-bottom: 10px; margin-top:50px;\">
-                  Here is the link to the customer portal to write a review and create a free account. <a href=$mp_url style=\"color:#FF5A60; word-break:break-all; text-decoration:none; font-weight:bold;\"> BNI Customer Portal</a>.</p>
-                
                     </div>
-                
-           
-                
-                    <div style=\"margin-bottom:50px;\">
-                
-                        <p>Thank You,<br />
-                
-                        $mechant_name</p>
-                
-                      
-                    </div>
-                
-                    </div>
-                
-                </div>
-                </body>
-                </html>"
+                    </body>
+                    </html>"
 
                 ];
                 //error_log($data);

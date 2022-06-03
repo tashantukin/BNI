@@ -79,9 +79,31 @@
           },
         });
       }
+
+
+      function getMerchantDetails(callback)
+      {
+        var merchantGuid = localStorage.getItem('merchant_id');
+        var apiUrl = `/api/v2/users/${merchantGuid}`;
+        $.ajax({
+          url: apiUrl,
+          method: "GET",
+          contentType: "application/json",
+          success: function (result) {
+            if (result) {
+              callback(result);
+            // console.log(`custom  ${result.CustomFields}`);
+            } else {
+              callback();
+            // console.log(`custom  ${result.CustomFields}`);
+            }
+          },
+        });
+    }
       return {
         getMarketplaceCustomFields: getMarketplaceCustomFields,
-        getUserCustomFields : getUserCustomFields
+        getUserCustomFields: getUserCustomFields,
+        getMerchantDetails : getMerchantDetails
         
       }
   }
@@ -103,16 +125,93 @@
 
 var userInvite = (function (){
     var instance;
-    function init()
-    {
-      function appendInvite(){
+    function init(){
+      function appendInvite()
+      {
+        
+        let inviteButton =  `<li class=""><a class="btn btn-invite-consumer" href="javascript:void(0);" data-toggle="modal" data-target="#modal-invite-consumer">+ Invite Consumer</a></li>`
+        $('.navigation').prepend(inviteButton);
+        let inviteModal = `<div id="modal-invite-consumer" class="modal fade x-boot-modal" role="dialog" style="display: block;">
+                            <div class="modal-dialog">
+                                
+                                    <!-- Modal content-->
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <button type="button" class="close" data-dismiss="modal">×</button>
+                                            <h4 class="modal-title" align="center">Invite your Consumer to onboard on your marketplace</h4>
+                                            <p class="text-center">Enter your recipient emails below <br>(Use commas seprate muktiple recipients).</p>
+                                        </div>
+                                        <div class="modal-body">
+                                          <div class="row">
+                                            <div class="col-md-12">
+                                                <textarea name="invite_mail" rows="5" class="form-control light required invite-buyers-email-list " placeholder="e.g: seller1@email.com, seller2@gmail.com"></textarea>
+                                            </div>  
+                                          </div>                   
+                                        </div>
+                                        <div class="modal-footer text-center">
+                                            <button class="btn-red" id="invite">Send</button>
+                                        </div>
+                                    </div>
+                               
+                            </div>
+                        </div>`;
+        
+        $('body').append(inviteModal);
+
+      }
+
+      function sendEmail(emails){
+        var data = { 'emails' : emails.split(',') };
+        console.log(data);
+        var apiUrl = packagePath + '/send_edm.php';
+        $.ajax({ 
+          url: apiUrl,
+          method: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify(data),
+          success: function (response)
+          {
+
+            $('#modal-invite-consumer').removeClass('in');
+             jQuery("#cover").hide();
+             jQuery('body').removeClass('modal-open');
+
+
+            //  toastr.success('Successfully saved.');
+
+          },
+          error: function (jqXHR, status, err)
+          {
+            // toastr.error('---');
+          }
+      });
+      }
+
+      function processInvite()
+      {
+        //check if the url is from an invite
+        var isInvited = getParameterByName('isInvited') == 'true' ? true : false;   
+
+        if (isInvited) {
+          //save the merchant id to local storage for later use
+          merchantId = getParameterByName('merchant_guid');
+          localStorage.setItem('merchant_id', merchantId);
+          // default the sign in tab for sign up
+          $('.signin-sec').removeClass('active');
+          $('.register-sec').addClass('active');
+         
+        }
 
 
       }
+
+    
      
       return {
         
-        
+        appendInvite: appendInvite,
+        sendEmail: sendEmail,
+        processInvite : processInvite
       }
   }
     return {
@@ -136,14 +235,14 @@ var merchantReview = (function (){
     function init()
     {
      
-      function appendReviewModal()
+      function appendReviewModal(name)
       {
         //append the modal to the body of home page
         $('head').append(`<script type="text/javascript" src="https://bootstrap.arcadier.com/spacetime/js/rating.js"></script>`);
         let reviewModal = `<div class="popup-area popup-merchant-rating">
                           <div class="wrapper">
                             <div class="title-area">
-                                <div class="pull-left"><strong>Please rate {merchant name} and write a review</strong></div>
+                                <div class="pull-left"><strong>Please rate ${name} and write a review</strong></div>
                               <div class="pull-right"> <a href="javascript:void(0);" onclick="closePopup('popup-merchant-rating')"><img src="https://bootstrap.arcadier.com/package/images/icon-cross-black.png" /></a> </div>
                               <div class="clearfix"></div>
                             </div>
@@ -224,7 +323,7 @@ var merchantReview = (function (){
         jQuery("#cover").hide();
         jQuery('body').removeClass('modal-open');
 
-      saveFeedback($('#rating').val(), $('#headline').val(), $('#review').val(), $('#your-name').val());
+      saveFeedback($('#rating').val(), $('#headline').val(), $('#review').val(), $('#your-name').val(),localStorage.getItem('merchant_id'));
 
     }
       
@@ -234,9 +333,9 @@ var merchantReview = (function (){
       jQuery('body').removeClass('modal-open');
     }
       
-    function saveFeedback(rating, headline, review, name)
+    function saveFeedback(rating, headline, review, name, merchant_guid)
     {
-       var data = { 'consumer_id': userId, 'consumer_name': name, 'merchant_id':'', rating, headline, review }
+       var data = { 'consumer_id': userId, 'consumer_name': name, 'merchant_id': merchant_guid, rating, headline, review }
           console.log({data})
           $.ajax({
               method: "POST",
@@ -250,10 +349,40 @@ var merchantReview = (function (){
               success: function (response)
               {
                   console.log({ response })
+                sendEmailToMerchant(localStorage.getItem('merchant_id'));
 
               
               }    
         })
+    }
+      
+    function sendEmailToMerchant(merchant_guid)
+    {
+        var data = { merchant_guid };
+          console.log(data);
+          var apiUrl = packagePath + '/send_review.php';
+          $.ajax({ 
+            url: apiUrl,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function (response)
+            {
+
+              console.log(response);
+
+              //delete the merchant_id localstorage once email has been sent
+
+              localStorage.removeItem('merchant_id');
+
+              //  toastr.success('Successfully saved.');
+
+            },
+            error: function (jqXHR, status, err)
+            {
+              // toastr.error('---');
+            }
+        });
     }
  
   return {
@@ -283,33 +412,6 @@ var merchantReview = (function (){
 
   
 
-
-
-  function sendEmail(emails)
-  {
-    var data = { 'emails' : emails.split(',') };
-		console.log(data);
-		var apiUrl = packagePath + '/send_edm.php';
-		$.ajax({ 
-			url: apiUrl,
-			method: 'POST',
-			contentType: 'application/json',
-			data: JSON.stringify(data),
-			success: function (response)
-			{
-
-				//  toastr.success('Successfully saved.');
-
-			},
-			error: function (jqXHR, status, err)
-			{
-				// toastr.error('---');
-			}
-		});
-  }
-
-
-
   $(document).ready(function () {
   
     
@@ -319,26 +421,44 @@ var merchantReview = (function (){
       //validate if the user already submitted a review
       var userData = getCustomFields.getInstance();
       var reviewAction = merchantReview.getInstance();
+      
       userData.getUserCustomFields(function (result)
       {
         console.info({ result });
         if (result) {
-            result.some(item => item.Name === 'reviewed') ? console.info('saved already') : reviewAction.appendReviewModal();
+            result.some(item => item.Name === 'reviewed') ? console.info('saved already') : userData.getMerchantDetails(function (result)
+            {
+              let merchantName = result.DisplayName;
+              reviewAction.appendReviewModal(merchantName);
+             
+            }) 
             //show modal if not yet reviewed.
-            setTimeout(function() {
-              reviewAction.giveItemFeedback();
+          setTimeout(function ()
+          {
+              
+             reviewAction.giveItemFeedback();
+             
               // $('.starrr').starrr()
             
             },1000);
           
         } else {
           console.info('none');
-          reviewAction.appendReviewModal()
+           userData.getMerchantDetails(function (result)
+            {
+              let merchantName = result.DisplayName;
+              reviewAction.appendReviewModal(merchantName);
+             
+            }) 
            setTimeout(function() {
-             reviewAction.giveItemFeedback();
-              $('.starrrs').starrr({
-              rating: 4
+            userData.getMerchantDetails(function (result)
+            {
+              let merchantName = result.DisplayName;
+              reviewAction.giveItemFeedback(merchantName);
             })
+            //   $('.starrrs').starrr({
+            //   rating: 4
+            // })
             
             },1000);
           
@@ -346,8 +466,6 @@ var merchantReview = (function (){
            
 
       });
-
-
       //review
 
       jQuery('body').on('mouseout','#stars .glyphicon',function(){
@@ -375,53 +493,27 @@ var merchantReview = (function (){
         reviewAction.submitFeedback();
       })
       
-
-
-
-
-        $('.login-menu').after(`<input type="button" value="Invite Consumer" id="invite" class="btn-red">`);
-
-      $('body').append(`<div id="InviteConsumerDemo" class="popup popup-demo-seller" style="";">
-        <div class="popup-wrapper">
-            <div class="popup-body">Invite your Consumer to onboard on your marketplace</div>
-            <div class="pull-right">
-                <button type="button" class="close" data-dismiss="modal">×</button>
-            </div>
-            <div class="popup-demo-content">
-                <!-- <div class="popoup-seller-img"></div> -->
-                <p>Enter your recipient emails below</p>
-                <p>(Use commas separate multiple recipients).</p>
-                <textarea class="invite-buyers-email-list" placeholder="e.g: consumer1@email.com, consumer2@email.com"></textarea>
-            </div>
-            <div class="popup-footer">
-                <input id="btn-send-direct-buyer-invite" class="mybtn btn-blue" type="button" value="Send">
-            </div>
-        </div>
-      </div>
-      `)
     }
 
+    if (document.body.className.includes('page-dashboard')) {
+      var inviteData = userInvite.getInstance();
+      inviteData.appendInvite();
 
-    $('body').on('click', '#invite', function ()
-      {
-      $('#InviteConsumerDemo').addClass('in');
+      $('body').on('click', '#invite', function (){
 
+      inviteData.sendEmail($('.invite-buyers-email-list').val())
 
-    });
+      });
 
+    }
 
-    $('body').on('click', '#btn-send-direct-buyer-invite', function ()
-    {
+    if (document.body.className.includes('page-login')) {
+      var inviteData = userInvite.getInstance();
+      inviteData.processInvite();
+
+    }
+
   
-
-        sendEmail($('.invite-buyers-email-list').val())
-
-
-    });
-
-
-    
-
 
   
   });

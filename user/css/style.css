@@ -43,3 +43,45 @@
 .popup-merchant-rating.feedback-popup-submitbtn:focus{
     border-radius: 2px;
 }
+
+
+
+.btn-invite-consumer {
+    min-height: 30px !important;
+    line-height: 30px !important;
+    padding-right: 20px !important;
+    padding-left: 20px !important;
+    color: var(--user-color) !important;
+    box-shadow: none !important;
+    border-radius: 0;
+    border: 1px solid var(--user-color);
+    font-weight: 700;
+    font-size: 12px;
+}
+
+
+#modal-invite-consumer .modal-footer .btn-red {
+	background-color: var(--user-color);
+	border: none;
+	border-radius: 0px;
+	padding: 9px 50px;
+	color: #fff;
+}
+
+#modal-invite-consumer.modal {
+	top: 100px;
+}
+#modal-invite-consumer .modal-header p{
+    color: #999;
+    margin-top: 15px;
+}
+#modal-invite-consumer textarea.form-control{
+    height: auto;
+}
+
+.item-discount-price {
+    display: flex;
+    flex-direction: column;
+    float: right;
+    text-align: right;
+}
