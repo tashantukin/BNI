@@ -12,6 +12,8 @@
   var accessToken = 'Bearer ' + getCookie('webapitoken');
   const baseURL = window.location.hostname;
   const protocol = window.location.protocol;
+  var countryCode, stateCode, cityCode;
+
 
 
   function waitForElement(elementPath, callBack) {
@@ -223,8 +225,6 @@ var userInvite = (function (){
 
 
       }
-
-    
      
       return {
         
@@ -565,6 +565,297 @@ var merchantReview = (function (){
 
 })()
 
+
+var merchantListSearch = (function (){
+    var instance;
+    function init(){
+     
+    function alterInterface()
+    {
+       let customDiv =  `<div class="container">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="storefront-top-action box-merchant-wrapper item-filter">
+                            <div class="row">
+                                <div class="col-md-12">
+                                   
+                                        <div>
+                                            <div class="custom-form-group">
+                                                <h4>What service are you looking for? </h4>
+                                            </div>
+                                            <div class="custom-form-group">
+                                                <label for="">Keyword</label>
+                                                <div class="search-group">
+                                                    <input type="text" id="merchant-keyword" class="custom-control form-control" placeholder="Search with display name " name="search-item">
+                                                    <input type="button" value="" id="go-search" class="btn-search"> 
+                                                </div>
+                                            </div>
+                                            <div class="custom-form-group">
+                                                <label for="">Categories</label>
+                                                <div class="checkbox-wrapper" id="category-div">
+                                                   
+                                                    
+                                                </div>
+                                            </div>
+                                            <div class="custom-form-group">
+                                                <label for="">Country</label>
+                                                <div class="search-group">
+                                                    <input type="text" class="custom-control form-control" name="search-country" id="country">
+                                                </div>
+                                            </div>
+                                            <div class="custom-form-group">
+                                                <label for="">State</label>
+                                                <div class="search-group">
+                                                    <input type="text" class="custom-control form-control" name="search-state" id="state">
+                                                </div>
+                                            </div>
+                                            <div class="custom-form-group">
+                                                <label for="">City / Zipcode</label>
+                                                <div class="search-group">
+                                                    <input type="text" class="custom-control form-control" name="search-city" id="city">
+                                                </div>
+                                            </div>
+                                            <button type="" class="btn custom-search-btn" id="search-value">Search</button>
+                                        </div>
+                                 
+                                </div>
+                            </div>
+                            <div class="clearfix"></div>
+                        </div> 
+                    </div>
+                    <div class="col-md-8">
+                        <div class="storefront-top-action">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="item-filter">
+                                        <form method="get">
+                                            <ul>
+                                                <li>
+                                                    <label>Sort by :</label>
+                                                    <select name="sortby">
+                                                        <option>Name-Ascending</option>
+                                                        <option>Name-Descending</option>
+                                                        <option>Rating-Highest</option>
+                                                    </select>
+                                                </li>
+                                            </ul>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="box-merchant-main">
+                            <div class="row">
+                               
+                                
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                        </div>`;
+
+      $('.section-item-wishlist .container').hide();
+      $('.section-item-wishlist').prepend(customDiv);
+
+    }
+      
+    function searchByKeyword(keyword){
+        var data = { keyword };
+          console.log(data);
+          var apiUrl = packagePath + '/get_merchant_by_keyword.php';
+          $.ajax({ 
+            url: apiUrl,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function (response)
+            {
+              console.table(response);
+              const results = JSON.parse(response);
+              const merchants = results.result;
+              merchants.Records.forEach(function (merchant, i)
+              {
+                  let merchantDiv = ` <div class="col-md-3 col">
+                                      <div class="box-merchant"> <img src="${merchant['Media'][0]['MediaUrl']}">
+                                          <div class="merchant-description">
+                                              <h4>${merchant['DisplayName']}</h4> </div>
+                                      </div>
+                                  </div>`
+                $('.box-merchant-main .row').append(merchantDiv);
+
+              })
+
+            },
+            error: function (jqXHR, status, err)
+            {
+              // toastr.error('---');
+            }
+         });
+      }
+      
+    function searchByCategory(categories,code){
+          var data = { categories, code };
+          console.log(data);
+          var apiUrl = packagePath + '/get_merchant_by_categories.php';
+          $.ajax({ 
+            url: apiUrl,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function (response)
+            {
+              console.table(response);
+              const results = JSON.parse(response);
+              const merchants = results.result;
+              console.table(merchants.Records);
+              $('.box-merchant-main .row').empty();
+              merchants.Records.forEach(function (merchant, i)
+              {
+
+                var userData = getCustomFields.getInstance();
+                
+                userData.getConsumerDetails(merchant.replace("'", ''), function (result)
+                {
+                  let merchantDiv = ` <div class="col-md-3 col">
+                                      <div class="box-merchant"> <img src="${result['Media'][0]['MediaUrl']}">
+                                          <div class="merchant-description">
+                                              <h4>${result['DisplayName']}</h4> </div>
+                                      </div>
+                                  </div>`
+                $('.box-merchant-main .row').append(merchantDiv);
+                })
+
+              })
+
+            },
+            error: function (jqXHR, status, err)
+            {
+              // toastr.error('---');
+            }
+         });
+      }
+      
+    function searchByValue(value_country, code_country, value_state, code_state, value_city, code_city, combination)
+    {
+        var data = { value_country, code_country, value_state, code_state, value_city, code_city, combination };
+          console.log(data);
+          var apiUrl = packagePath + '/get_merchant_by_value.php';
+          $.ajax({ 
+            url: apiUrl,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function (response)
+            {
+              console.table(response);
+              const results = JSON.parse(response);
+              const merchants = results.result;
+              console.table(merchants.Records);
+              $('.box-merchant-main .row').empty();
+              merchants.Records.forEach(function (merchant, i)
+              {
+
+                var userData = getCustomFields.getInstance();
+                
+                userData.getConsumerDetails(merchant.replace("'", ''), function (result)
+                {
+                  let merchantDiv = ` <div class="col-md-3 col">
+                                      <div class="box-merchant"> <img src="${result['Media'][0]['MediaUrl']}">
+                                          <div class="merchant-description">
+                                              <h4>${result['DisplayName']}</h4> </div>
+                                      </div>
+                                  </div>`
+                $('.box-merchant-main .row').append(merchantDiv);
+                })
+
+              })
+
+            },
+            error: function (jqXHR, status, err)
+            {
+              // toastr.error('---');
+            }
+         });
+    }
+       
+    function renderCategoriesCustomfields()
+    {
+          var apiUrl = packagePath + '/get_merchant_categories.php';
+          $.ajax({ 
+            url: apiUrl,
+            method: 'POST',
+            contentType: 'application/json',
+           // data: JSON.stringify(data),
+            success: function (response)
+            {
+              console.table(response);
+              const results = JSON.parse(response);
+              const merchantCategories = [];
+              const categories = results.result['Records'].filter(record => record.Name === "Categories");
+              const country = results.result['Records'].filter(record => record.Name === "Country");
+              countryCode = country[0]['Code'];
+              const state = results.result['Records'].filter(record => record.Name === "State");
+              stateCode = state[0]['Code'];
+              const city = results.result['Records'].filter(record => record.Name === "City / Zipcode");
+              cityCode = city[0]['Code'];
+              
+              console.table(categories);
+              if (categories) {
+                const options = categories[0]['Options'];
+                const categoryCode = categories[0]['Code'];
+                $('#category-div').attr('custom-id', categoryCode)
+                
+                  options.forEach(function (category, i)
+                  { 
+                    let categoryOptions  =  ` <label class="co-form-control">
+                                                        <input type="checkbox" name="checkbox" value="${category['Name']}">
+                                                        ${category['Name']}
+                                                    </label>`
+                    $('#category-div').append(categoryOptions);
+                  })
+                 
+            
+              }
+
+           
+
+            },
+            error: function (jqXHR, status, err)
+            {
+              // toastr.error('---');
+            }
+         });
+    }
+      
+    
+
+    
+      return {
+        
+        alterInterface: alterInterface,
+        searchByKeyword: searchByKeyword,
+        renderCategoriesCustomfields: renderCategoriesCustomfields,
+        searchByCategory: searchByCategory,
+        searchByValue : searchByValue
+      }
+  }
+    return {
+      getInstance: function ()
+      {
+        if (!instance) {
+        
+            instance = init()
+        
+        }
+        
+        return instance
+      }
+    }
+
+ })()  
+
+
   
   $(document).ready(function () {
   
@@ -692,8 +983,44 @@ var merchantReview = (function (){
 
     }
 
+    if (urls.indexOf('/user/marketplace/merchant-list')) {
+      var merchantSearch = merchantListSearch.getInstance(); 
+      merchantSearch.alterInterface();
+       merchantSearch.renderCategoriesCustomfields();
+
+    $('body').on('click', '#go-search', function (){
+
+      merchantSearch.searchByKeyword($('#merchant-keyword').val());
 
 
-  
+    });  
+      
+    //search by category
+      jQuery('body').on('change', '#category-div', function ()
+      {
+     
+        selectedCategories = []
+        $('#category-div').find('input[type=checkbox]').each(function ()
+        {
+        
+          this.checked ? selectedCategories.push($(this).val()) : "";
+          //console.log({ selectedCategories })
+        
+        });
+
+        merchantSearch.searchByCategory(selectedCategories.toString(), $('#category-div').attr('custom-id'));
+
+      });
+
+      $('body').on('click', '#search-value', function ()
+      {
+        merchantSearch.searchByValue($('#country').val(),countryCode, $('#state').val(),stateCode,$('#city').val(),cityCode, 1);
+      })
+
+
+        
+    }
+
+
   });
 })();

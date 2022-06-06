@@ -100,3 +100,93 @@
     float: right;
     text-align: right;
 }
+
+
+
+.section.section-shop {
+  padding: 2rem 0;
+}
+
+.box-merchant-wrapper {
+  background: #FFFFFF;
+  border: 1px solid #CCCCCC;
+  padding: 1rem;
+}
+
+.box-merchant-wrapper .custom-control.form-control {
+  width: 100%;
+}
+
+.box-merchant-wrapper .custom-form-group {
+  margin-bottom: 2rem;
+}
+
+.box-merchant-wrapper .custom-form-group label {
+  color: #4D4D4D;
+}
+
+.box-merchant-wrapper .custom-search-btn.btn {
+  width: 100%;
+  padding: 0.8em 0.5em;
+  background: #BE3437;
+  border-radius: 3px;
+  color: #FFFFFF;
+  font-size: 700;
+  outline: none;
+}
+
+
+.checkbox-wrapper {
+  padding: 10px 45px 10px 20px;
+  border: 1px solid #ccc;
+  height: 150px;
+  overflow-y: scroll;
+}
+
+.checkbox-wrapper .co-form-control {
+  font-size: 1.2rem;
+  line-height: 1.1;
+  display: grid;
+  grid-template-columns: 1em auto;
+  gap: 0.5em;
+}
+
+.co-form-control+.co-form-control {
+  margin-top: 1em;
+}
+
+.checkbox-wrapper .co-form-control input[type="checkbox"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: transparent;
+  margin: 0;
+  font: inherit;
+  color: #CCCCCC;
+  width: 1.15em;
+  height: 1.15em;
+  border: 1px solid #CCCCCC;
+  border-radius: 0.15em;
+  transform: translateY(-0.075em);
+  display: grid;
+  place-content: center;
+}
+
+.checkbox-wrapper .co-form-control input[type="checkbox"]::before {
+  content: "";
+  width: 0.65em;
+  height: 0.65em;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+  transform: scale(0);
+  transform-origin: bottom left;
+  transition: 120ms transform ease-in-out;
+  background-color: #00c8b2;
+}
+
+.checkbox-wrapper .co-form-control input[type="checkbox"]:checked::before {
+  transform: scale(1);
+}
+
+.checkbox-wrapper .co-form-control input[type="checkbox"]:focus {
+  outline: max(2px, 0.15em) solid currentColor;
+  outline-offset: max(2px, 0.15em);
+}
